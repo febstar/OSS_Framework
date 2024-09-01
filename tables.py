@@ -55,5 +55,6 @@ class Sales(db.Model):
 class Users(UserMixin, db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String(250), unique=True)
+    name: Mapped[int] = mapped_column(String(250))
+    email: Mapped[str] = mapped_column(String(250), unique=True)
     password: Mapped[str] = mapped_column(String(250))
