@@ -73,7 +73,57 @@ def register():
             return redirect(url_for('home'))
     return render_template('register.html', form=form, current_user=current_user)
 
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = db.session.execute(db.select(Users).where(Users.email == form.email.data)).scalar()
+        user_password = form.password.data
+        if user and check_password_hash(user.password, user_password):
+            login_user(user)
+            return redirect(url_for('home'))
+        elif not user:
+            flash('You are not registered!')
+            return redirect(url_for('register'))
+        else:
+            flash('Incorrect Password, Please try again.')
+            return redirect(url_for('login'))
+    return render_template("login.html", form=form, current_user=current_user)
 
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+
+@app.route('/products')
+def products():
+    return render_template('product.html')
+
+
+@app.route('/add-product', methods= ['GET', 'POST'])
+@admin_only
+def add_product():
+    form = CreateProductForm()
+    if form.validate_on_submit():
+        product = db.session.execute(db.select(Product).where(Product.name == form.name.data)).scalar()
+        if product:
+            flash('Product already registered in the database!')
+            return redirect(url_for('products'))
+        else:
+            new_product = Product(
+                name=form.name.data,
+                price=form.price.data,
+                amount_stock=form.amount_stock.data,
+                amount_sold=form.amount_sold.data,
+                img_url=form.img_url.data,
+                barcode=form.barcode.data
+            )
+            db.session.add(new_product)
+            db.session.commit()
+            return redirect(url_for('products'))
+    return render_template('add-product.html', form=form, current_user=current_user)
 
 if __name__ == "__main__":
     app.run(debug=True)
