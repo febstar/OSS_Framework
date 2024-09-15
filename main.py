@@ -125,5 +125,17 @@ def add_product():
             return redirect(url_for('products'))
     return render_template('add-product.html', form=form, current_user=current_user)
 
+@app.route('/view-product', methods= ['GET', 'POST'])
+def view_product():
+    all_products = db.session.execute(db.select(Product)).scalars().all()
+    return render_template('view-product.html', products=all_products, current_user=current_user)
+
+
+@app.route("/product/<int:product_id>")
+def show_product(product_id):
+    requested_product = db.get_or_404(Product, product_id)
+    return render_template("show-product.html", product=requested_product, current_user=current_user)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
