@@ -137,5 +137,37 @@ def show_product(product_id):
     return render_template("show-product.html", product=requested_product, current_user=current_user)
 
 
+@app.route("/edit-product/<int:product_id>", methods=["GET", "POST"])
+@admin_only
+def edit_product(product_id):
+    requested_product = db.get_or_404(Product, product_id)
+    edit_form = CreateProductForm(
+        name=requested_product.name,
+        price=requested_product.price,
+        amount_stock=requested_product.amount_stock,
+        amount_sold=requested_product.amount_sold,
+        img_url=requested_product.img_url,
+        barcode=requested_product.barcode
+    )
+    if edit_form.validate_on_submit():
+        requested_product.name = edit_form.name.data
+        requested_product.price = edit_form.price.data
+        requested_product.amount_stock = edit_form.amount_stock.data
+        requested_product.amount_sold = edit_form.amount_sold.data
+        requested_product.img_url = edit_form.img_url.data
+        requested_product.barcode = edit_form.barcode.data
+        db.session.commit()
+        return redirect(url_for("show_product", product_id=product_id))
+    return render_template('add-product.html', form=edit_form, current_user=current_user)
+
+
+@app.route("/delete-product/<int:product_id>")
+@admin_only
+def delete_product(product_id):
+    product_to_delete = db.get_or_404(Product, product_id)
+    db.session.delete(product_to_delete)
+    db.session.commit()
+    return redirect(url_for('view_product'))
+
 if __name__ == "__main__":
     app.run(debug=True)
