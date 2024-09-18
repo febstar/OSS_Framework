@@ -169,5 +169,6 @@ def delete_product(product_id):
     db.session.commit()
     return redirect(url_for('view_product'))
 
+
 if __name__ == "__main__":
     app.run(debug=True)
