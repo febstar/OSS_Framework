@@ -1,0 +1,150 @@
+{% include "header.html" %}
+
+<main class="mb-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <!-- Product Search Section -->
+        <div>
+          <input type="text" id="barcodeInput" placeholder="Scan barcode or search by name" oninput="searchProduct()">
+          <div id="searchResults"></div>
+        </div>
+
+        <!-- Cart Section -->
+        <div id="cart">
+          <h3>Your Cart</h3>
+          <ul id="cartItems"></ul>
+          <button id="payButton" onclick="completeSaleAndPrint()">Pay</button>
+          <button id="printButton" onclick="printReceipt()" disabled>Print Receipt</button>
+        </div>
+
+        <!-- JavaScript -->
+        <script>
+          let cart = [];
+          let saleId = null;  // This will hold the last sale ID
+
+          // Search for product by barcode or name
+          function searchProduct() {
+            let query = document.getElementById('barcodeInput').value;
+
+            fetch(`/search_product?q=${query}`)
+              .then(response => response.json())
+              .then(data => {
+                let results = document.getElementById('searchResults');
+                results.innerHTML = '';
+
+                if (data.products.length === 0) {
+                  results.innerHTML = 'No products found.';
+                  return;
+                }
+
+                data.products.forEach(product => {
+                  let productDiv = document.createElement('div');
+                  productDiv.innerHTML = `<b>${product.name}</b> - $${product.price}`;
+                  productDiv.onclick = () => addToCart(product);
+                  results.appendChild(productDiv);
+                });
+              });
+          }
+
+          // Add product to the cart
+          function addToCart(product) {
+            let quantity = prompt(`Enter quantity for ${product.name}`);
+            quantity = parseInt(quantity);
+
+            if (quantity > 0) {
+              let existingItem = cart.find(item => item.id === product.id);
+
+              if (existingItem) {
+                existingItem.quantity += quantity; // Update quantity if product already in cart
+              } else {
+                cart.push({ ...product, quantity });
+              }
+
+              displayCart();
+            } else {
+              alert('Please enter a valid quantity.');
+            }
+          }
+
+          // Display cart items
+          function displayCart() {
+            let cartItems = document.getElementById('cartItems');
+            cartItems.innerHTML = '';
+
+            if (cart.length === 0) {
+              cartItems.innerHTML = '<li>Cart is empty</li>';
+              return;
+            }
+
+            cart.forEach(item => {
+              cartItems.innerHTML += `<li>${item.name} - ${item.quantity} x $${item.price} = $${item.quantity * item.price}</li>`;
+            });
+          }
+
+          // Complete sale, record the sale, and print receipt
+          function completeSaleAndPrint() {
+            if (cart.length === 0) {
+              alert('Your cart is empty.');
+              return;
+            }
+
+            fetch('/record_sale', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ cart })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.sale_id) {
+                alert('Sale completed!');
+                saleId = data.sale_id; // Save sale_id for receipt printing
+                cart = [];
+                displayCart();
+                document.getElementById('printButton').disabled = false; // Enable print button after sale
+                printReceipt(); // Automatically print receipt after sale completion
+              } else {
+                alert('Failed to get sale ID.');
+              }
+            })
+            .catch(err => {
+              alert('Error completing sale: ' + err.message);
+              console.error(err);
+            });
+          }
+
+          // Open a new window to print the receipt
+          function printReceipt() {
+            if (saleId) {
+              fetch(`/print_receipt/${saleId}`)
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                  }
+                  return response.blob(); // Get the response as a Blob
+                })
+                .then(blob => {
+                  const url = window.URL.createObjectURL(blob);
+                  const newWindow = window.open(url, '_blank'); // Open in a new window
+                  newWindow.onload = function() {
+                    setTimeout(() => {
+                      window.URL.revokeObjectURL(url); // Clean up the object URL
+                    }, 100);
+                  };
+                })
+                .catch(err => {
+                  alert('Error printing receipt: ' + err.message);
+                });
+            } else {
+              alert('No sale to print receipt for.');
+            }
+          }
+        </script>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% include "footer.html" %}

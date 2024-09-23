@@ -1,6 +1,6 @@
 from datetime import date
 import werkzeug
-from flask import Flask, abort, render_template, redirect, url_for, flash
+from flask import Flask, abort, render_template, redirect, url_for, flash, jsonify, request
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
@@ -11,7 +11,7 @@ from sqlalchemy import Integer, String, Text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 # Imports from local
-from tables import db, Product, Sale, Users
+from tables import db, Product, Sale, Users, SalesItem, ClosingBalance
 from forms import CreateSalesForm, CreateProductForm, RegisterForm, LoginForm
 
 
@@ -174,6 +174,96 @@ def delete_product(product_id):
 @admin_only
 def sales():
     return render_template('sales.html')
+
+
+@app.route('/record-sale')
+def record_sale_page():
+    return render_template('record-sales.html')
+
+
+# Search product by barcode or name (dynamic search)
+@app.route('/search_product')
+def search_product():
+    query = request.args.get('q', '')
+    products = Product.query.filter(
+        (Product.name.ilike(f'%{query}%')) |
+        (Product.barcode == query)
+    ).all()
+    return jsonify({
+        'products': [{'id': p.id, 'name': p.name, 'price': p.price} for p in products]
+    })
+
+
+# Record sale
+@app.route('/record_sale', methods=['POST'])
+def record_sale():
+    data = request.json
+    cart = data['cart']
+
+    # Create a new sale
+    new_sale = Sale(total_amount=0)
+    db.session.add(new_sale)
+    db.session.flush()  # Get the sale ID before committing
+
+    total_sale_value = 0
+
+    # Add products from the cart
+    for item in cart:
+        product = Product.query.get(item['id'])
+        quantity = int(item['quantity'])
+
+        # Update stock and amount sold
+        if product.amount_stock < quantity:
+            return jsonify({'error': f'Not enough stock for {product.name}'}), 400
+
+        product.amount_stock -= quantity
+        product.amount_sold += quantity
+
+        # Create SalesItem for each product
+        sale_item = SalesItem(
+            sale_id=new_sale.id,
+            product_id=product.id,
+            quantity=quantity,
+            unit_price=product.price
+        )
+        db.session.add(sale_item)
+
+        total_sale_value += quantity * product.price
+
+    new_sale.total_amount = total_sale_value
+    db.session.commit()
+
+    return jsonify({'sale_id': new_sale.id}), 201
+
+
+
+# Generate and print receipt
+@app.route('/print_receipt/<int:sale_id>')
+def print_receipt(sale_id):
+    sale = Sale.query.get(sale_id)
+    if not sale:
+        return "Sale not found", 404
+
+    # Get all items in this sale
+    sale_items = SalesItem.query.filter_by(sale_id=sale_id).all()
+
+    # Prepare data for rendering
+    products = []
+    total = 0
+    for item in sale_items:
+        product = Product.query.get(item.product_id)
+        subtotal = item.quantity * item.unit_price
+        products.append({
+            'name': product.name,
+            'quantity': item.quantity,
+            'unit_price': item.unit_price,
+            'subtotal': subtotal
+        })
+        total += subtotal
+
+    # Render the receipt page
+    return render_template('receipt.html', sale=sale, products=products, total=total)
+
 
 
 if __name__ == "__main__":
