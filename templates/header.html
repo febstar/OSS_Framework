@@ -92,7 +92,7 @@
                         {% if current_user.is_authenticated %}
                         <div class="navbar-nav mr-auto py-0">
                             <a href="{{ url_for('products') }}" class="nav-item nav-link">Product</a>
-                            <a href="gallery.html" class="nav-item nav-link">Sales</a>
+                            <a href="{{ url_for('sales') }}" class="nav-item nav-link">Sales</a>
                             <a href="{{ url_for('logout') }}" class="nav-item nav-link">Logout</a>
                         </div>
                         {% endif %}

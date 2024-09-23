@@ -20,12 +20,12 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 # Association table for many-to-many relationship between Sales and Products
-sales_products = Table(
-    'sales_products', Base.metadata,
-    Column('product_id', Integer, ForeignKey('product.id'), primary_key=True),
-    Column('sale_id', Integer, ForeignKey('sales.id'), primary_key=True),
-    Column('quantity', Integer, nullable=False, default=1)  # Quantity sold in the sale
-)
+# sales_products = Table(
+#     'sales_products', Base.metadata,
+#     Column('product_id', Integer, ForeignKey('product.id'), primary_key=True),
+#     Column('sale_id', Integer, ForeignKey('sales.id'), primary_key=True),
+#     Column('quantity', Integer, nullable=False, default=1)  # Quantity sold in the sale
+# )
 
 
 class Product(db.Model):
@@ -38,23 +38,53 @@ class Product(db.Model):
     img_url: Mapped[str] = mapped_column(String(250))
     barcode: Mapped[int] = mapped_column(Integer)
 
-    # Many-to-many relationship with Sales
-    sales = relationship('Sales', secondary=sales_products, back_populates='products')
+    # Relationship to SalesItems
+    sales_items = relationship("SalesItem", back_populates="product")
 
 
-class Sales(db.Model):
+# Define Sale Model
+class Sale(db.Model):
     __tablename__ = "sales"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    date: Mapped[str] = mapped_column(String(100))
-    closing_balance: Mapped[int] = mapped_column(Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime, default=db.func.current_timestamp())
+    total_amount = db.Column(db.Integer, nullable=False)
 
-    # Many-to-many relationship with Products
-    products = relationship('Product', secondary=sales_products, back_populates='sales')
+    # Relationship to SalesItems
+    items = relationship("SalesItem", back_populates="sale")
 
 
+# Define SalesItem Model for many-to-many relationship
+class SalesItem(db.Model):
+    __tablename__ = "sales_items"
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=False)  # References 'sales'
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)  # References 'product'
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_price = db.Column(db.Integer, nullable=False)
+
+    # Relationships
+    sale = relationship("Sale", back_populates="items")
+    product = relationship("Product", back_populates="sales_items")
+
+    # Auto-calculate subtotal for this item
+    @property
+    def subtotal(self):
+        return self.quantity * self.unit_price
+
+
+# Define ClosingBalance Model
+class ClosingBalance(db.Model):
+    __tablename__ = "closing_balance"
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False, unique=True)
+    total_sales = db.Column(db.Integer, nullable=False)
+    closing_balance = db.Column(db.Integer, nullable=False)
+
+
+# Define Users Model
 class Users(UserMixin, db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[int] = mapped_column(String(250))
+    name: Mapped[str] = mapped_column(String(250))  # Changed to str, not int
     email: Mapped[str] = mapped_column(String(250), unique=True)
     password: Mapped[str] = mapped_column(String(250))

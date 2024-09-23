@@ -11,7 +11,7 @@ from sqlalchemy import Integer, String, Text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 # Imports from local
-from tables import db, Product, Sales, Users, sales_products
+from tables import db, Product, Sale, Users
 from forms import CreateSalesForm, CreateProductForm, RegisterForm, LoginForm
 
 
@@ -168,6 +168,12 @@ def delete_product(product_id):
     db.session.delete(product_to_delete)
     db.session.commit()
     return redirect(url_for('view_product'))
+
+
+@app.route("/sales")
+@admin_only
+def sales():
+    return render_template('sales.html')
 
 
 if __name__ == "__main__":

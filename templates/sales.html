@@ -1,0 +1,17 @@
+{% include "header.html" %}
+
+<main class="mb-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+       <ol>
+         <li><a href="{{ url_for('add_product') }}">Record Sale</a></li>
+         <li><a href="{{ url_for('view_product') }}">View All Sales</a></li>
+       </ol>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+{% include "footer.html" %}
