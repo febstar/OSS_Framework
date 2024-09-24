@@ -1,3 +1,4 @@
+import random
 from datetime import date
 import werkzeug
 from flask import Flask, abort, render_template, redirect, url_for, flash, jsonify, request
@@ -48,7 +49,8 @@ bootstrap = Bootstrap5(app)
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    all_products = db.session.execute(db.select(Product)).scalars().all()
+    return render_template('index.html', products=all_products)
 
 
 @app.route('/register', methods=["POST", "GET"])
@@ -72,6 +74,7 @@ def register():
             login_user(new_user)
             return redirect(url_for('home'))
     return render_template('register.html', form=form, current_user=current_user)
+
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -125,6 +128,7 @@ def add_product():
             return redirect(url_for('products'))
     return render_template('add-product.html', form=form, current_user=current_user)
 
+
 @app.route('/view-product', methods= ['GET', 'POST'])
 def view_product():
     all_products = db.session.execute(db.select(Product)).scalars().all()
@@ -177,6 +181,7 @@ def sales():
 
 
 @app.route('/record-sale')
+@admin_only
 def record_sale_page():
     return render_template('record-sales.html')
 
@@ -264,6 +269,21 @@ def print_receipt(sale_id):
     # Render the receipt page
     return render_template('receipt.html', sale=sale, products=products, total=total)
 
+
+@app.route('/view-sales', methods=["POST", "GET"])
+@admin_only
+def view_sales():
+    all_sales = db.session.execute(db.select(Sale)).scalars().all()
+    return render_template('view-sales.html', sales=all_sales, current_user=current_user)
+
+
+# @app.route("/delete-sale/<int:sale_id>")
+# @admin_only
+# def delete_sale(sale_id):
+#     sale_to_delete = db.get_or_404(Sale, sale_id)
+#     db.session.delete(sale_to_delete)
+#     db.session.commit()
+#     return redirect(url_for('view_sales'))
 
 
 if __name__ == "__main__":

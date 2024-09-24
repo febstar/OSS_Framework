@@ -15,6 +15,7 @@
           <h3>Your Cart</h3>
           <ul id="cartItems"></ul>
           <button id="payButton" onclick="completeSaleAndPrint()">Pay</button>
+          <button id="clearButton" onclick="clearCart()">Clear Cart</button> <!-- Clear Cart Button -->
           <button id="printButton" onclick="printReceipt()" disabled>Print Receipt</button>
         </div>
 
@@ -115,6 +116,14 @@
             });
           }
 
+          // Clear the cart
+          function clearCart() {
+            cart = [];
+            displayCart();
+            document.getElementById('printButton').disabled = true; // Disable print button when cart is cleared
+            alert('Cart cleared.');
+          }
+
           // Open a new window to print the receipt
           function printReceipt() {
             if (saleId) {
@@ -141,6 +150,7 @@
               alert('No sale to print receipt for.');
             }
           }
+
         </script>
       </div>
     </div>

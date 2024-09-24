@@ -1,0 +1,22 @@
+{% include "header.html" %}
+
+<main class="mb-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+       <ul>
+         {% for sale in sales %}
+           <li>
+             <a href="{{ url_for('print_receipt', sale_id=sale.id) }}">{{ sale.id }} - {{ sale.date }}</a>
+<!--             <span class="ml-2">-->
+<!--               <a href="{{ url_for('delete_sale', sale_id=sale.id) }}" class="text-danger">delete</a>-->
+<!--             </span>-->
+           </li>
+         {% endfor %}
+       </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% include "footer.html" %}
