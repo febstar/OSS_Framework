@@ -44,7 +44,7 @@ def admin_only(f):
 with app.app_context():
     db.create_all()
 
-app.secret_key = os.environ.get('FLASK_KEY')
+app.secret_key = "dede557dfjzzd"
 bootstrap = Bootstrap5(app)
 
 
