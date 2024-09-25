@@ -1,4 +1,5 @@
 import random
+import os
 from datetime import date
 import werkzeug
 from flask import Flask, abort, render_template, redirect, url_for, flash, jsonify, request
@@ -17,7 +18,7 @@ from forms import CreateSalesForm, CreateProductForm, RegisterForm, LoginForm
 
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///one-stop-store.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI", "sqlite:///one-stop-store.db")
 db.init_app(app)
 # Bootstrap5(app)
 
@@ -43,7 +44,7 @@ def admin_only(f):
 with app.app_context():
     db.create_all()
 
-app.secret_key = "dede557dfjzzd"
+app.secret_key = os.environ.get('FLASK_KEY')
 bootstrap = Bootstrap5(app)
 
 
