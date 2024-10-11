@@ -13,7 +13,7 @@
 - [Usage](#usage)
 - [Screenshots](#screenshots)
 - [Contributing](#contributing)
-- [License](#license)
+
 
 ---
 
@@ -142,12 +142,6 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 3. Commit your changes (`git commit -m 'Add some feature'`).
 4. Push to the branch (`git push origin feature/new-feature`).
 5. Open a Pull Request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ---
 
